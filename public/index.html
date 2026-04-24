@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tauron Energetyka Dnia</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">TAURON eLicznik</p>
+        <h1>Dzisiejsza energia pobrana i wpuszczona</h1>
+        <p class="lede">
+          Aplikacja loguje sie do eLicznika, pobiera wybrany dzien i pokazuje
+          najwazniejsze liczby bez przeklikiwania sie przez portal.
+        </p>
+      </section>
+
+      <section class="panel">
+        <form id="login-form" class="credentials">
+          <div class="field">
+            <label for="username">Login</label>
+            <input id="username" name="username" type="text" autocomplete="username" />
+          </div>
+
+          <div class="field">
+            <label for="password">Haslo</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" />
+          </div>
+
+          <div class="field">
+            <label for="siteId">Site ID opcjonalnie</label>
+            <input id="siteId" name="siteId" type="text" placeholder="123456_123456789_1" />
+          </div>
+
+          <button id="submit-button" type="submit">Pobierz dane</button>
+        </form>
+
+        <div id="status" class="status">Wpisz dane logowania lub skonfiguruj `config.local.php`.</div>
+      </section>
+
+      <section class="grid" id="summary-grid" hidden>
+        <article class="card accent-blue">
+          <p class="label">Pobrana</p>
+          <p class="value" id="imported-total">0.00 kWh</p>
+        </article>
+        <article class="card accent-green">
+          <p class="label">Wpuszczona / oddana</p>
+          <p class="value" id="exported-total">0.00 kWh</p>
+        </article>
+        <article class="card accent-sand">
+          <p class="label">Pobrana po zbilansowaniu</p>
+          <p class="value" id="net-imported-total">0.00 kWh</p>
+        </article>
+        <article class="card accent-rose">
+          <p class="label">Oddana po zbilansowaniu</p>
+          <p class="value" id="net-exported-total">0.00 kWh</p>
+        </article>
+      </section>
+
+      <section class="panel" id="details-panel" hidden>
+        <div class="table-header">
+          <div>
+            <p class="eyebrow">Szczegoly</p>
+            <h2 id="date-heading">Dane godzinowe</h2>
+          </div>
+          <button id="refresh-button" class="secondary-button" type="button">Odswiez</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Godzina</th>
+                <th>Pobrana</th>
+                <th>Wpuszczona</th>
+                <th>Po zbilansowaniu pobrana</th>
+                <th>Po zbilansowaniu oddana</th>
+              </tr>
+            </thead>
+            <tbody id="hourly-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+  </html>

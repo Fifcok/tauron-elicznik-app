@@ -1,0 +1,15 @@
+# Dane logowania (BARDZO WAŻNE - nie publikuj tego!)
+config.local.php
+.env
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db
+
+# Pliki edytorów i IDE
+.vscode/
+.idea/
+*.swp
+
+# Logi
+*.log
