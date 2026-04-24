@@ -1,4 +1,4 @@
-# Tauron Daily Energy App
+# Tauron Daily Energy App (stare zasady 80%)
 
 Moderny dashboard do monitorowania zużycia energii elektrycznej, zaprojektowany z myślą o estetyce i czytelności. Aplikacja loguje się do serwisu **eLicznik** i wizualizuje dane pobrane prosto z Twojego licznika.
 
