@@ -1,8 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
 return [
-    'TAURON_USERNAME' => 'email',
-    'TAURON_PASSWORD' => 'password',
+    'TAURON_USERNAME' => 'twoj_login',
+    'TAURON_PASSWORD' => 'twoje_haslo',
+    'TAURON_SITE_ID'  => 'opcjonalny_identyfikator',
 ];
