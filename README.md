@@ -17,6 +17,8 @@ Moderny dashboard do monitorowania zużycia energii elektrycznej, zaprojektowany
 - Bilans magazynu prosumenckiego (dzienny i roczny)
 - Interaktywne wykresy godzinowe oraz miesięczne
 
+![Screen z WWW](img/screen.png)
+
 ## 🚀 Uruchomienie
 
 1. Wgraj pliki na serwer z obsługą **Apache + PHP 8.0+**.
