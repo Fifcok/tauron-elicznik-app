@@ -10,6 +10,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+sync.ffs_db/
 
 # Logi
 *.log
