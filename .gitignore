@@ -10,7 +10,19 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+<<<<<<< HEAD
 sync.ffs_db/
 
 # Logi
 *.log
+=======
+sync.ffs_db
+
+# Logi
+<<<<<<< HEAD
+*.log
+=======
+*.log
+sync.ffs_db
+>>>>>>> 383ff9bff73979950ab99b68fd9884a028e38a49
+>>>>>>> 80ce14c772762aec78dea78261a47c2d1c5d73eb
