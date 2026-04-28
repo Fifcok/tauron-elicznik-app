@@ -13,4 +13,9 @@ Thumbs.db
 sync.ffs_db
 
 # Logi
+<<<<<<< HEAD
 *.log
+=======
+*.log
+sync.ffs_db
+>>>>>>> 383ff9bff73979950ab99b68fd9884a028e38a49
