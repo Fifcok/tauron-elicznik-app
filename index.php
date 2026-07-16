@@ -1,5 +1,6 @@
 <?php
 $yesterday = date('Y-m-d', strtotime('yesterday'));
+$currentMonth = date('Y-m');
 $stylesVersion = file_exists(__DIR__ . '/public/styles.css') ? filemtime(__DIR__ . '/public/styles.css') : time();
 $appJsVersion = file_exists(__DIR__ . '/public/app.js') ? filemtime(__DIR__ . '/public/app.js') : time();
 ?>
@@ -139,6 +140,43 @@ $appJsVersion = file_exists(__DIR__ . '/public/app.js') ? filemtime(__DIR__ . '/
         <div id="monthly-chart-empty" class="chart-empty" hidden>Brak danych do narysowania wykresu miesięcznego.</div>
         <div id="monthly-chart-tooltip" class="chart-tooltip" hidden></div>
         <svg id="monthly-energy-chart" class="energy-chart" viewBox="0 0 920 320" role="img" aria-label="Wykres dziennego poboru i oddawania energii w miesiącu"></svg>
+      </section>
+
+      <section class="panel boiler-panel" id="boiler-panel" hidden>
+        <div class="boiler-header">
+          <div>
+            <p class="eyebrow">Tapo P110</p>
+            <h2 id="boiler-name">Bojler</h2>
+          </div>
+          <span class="boiler-status" id="boiler-status">
+            <span class="boiler-status-dot"></span>
+            <span id="boiler-status-text">Sprawdzam...</span>
+          </span>
+        </div>
+
+        <article class="card accent-ink boiler-year-card" id="boiler-year-card">
+          <p class="label" id="boiler-year-label">Bojler w tym roku pobrał</p>
+          <p class="value" id="boiler-year-total">0.00 kWh</p>
+        </article>
+
+        <div class="chart-header boiler-month-controls">
+          <div>
+            <p class="eyebrow">Miesiąc</p>
+            <h2 id="boiler-month-title">Dzienne zużycie w miesiącu</h2>
+          </div>
+          <div class="date-row boiler-month-row">
+            <button id="boiler-prev-month" class="secondary-button nav-button" type="button" aria-label="Poprzedni miesiąc">
+              <span class="nav-arrow">&larr;</span>
+            </button>
+            <input id="boiler-month-input" name="boilerMonth" type="month" max="<?php echo $currentMonth; ?>" />
+            <button id="boiler-next-month" class="secondary-button nav-button" type="button" aria-label="Następny miesiąc">
+              <span class="nav-arrow">&rarr;</span>
+            </button>
+          </div>
+        </div>
+        <div id="boiler-chart-empty" class="chart-empty" hidden>Brak danych do narysowania wykresu.</div>
+        <div id="boiler-chart-tooltip" class="chart-tooltip" hidden></div>
+        <svg id="boiler-energy-chart" class="energy-chart" viewBox="0 0 920 320" role="img" aria-label="Wykres dziennego zużycia bojlera"></svg>
       </section>
     </main>
 

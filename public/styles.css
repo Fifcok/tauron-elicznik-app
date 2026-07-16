@@ -186,14 +186,16 @@ input {
   color-scheme: dark;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   filter: brightness(0) invert(1);
   opacity: 0.9;
   transition: opacity 0.2s ease;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
 
@@ -706,6 +708,88 @@ body.is-loading .shell {
   font-weight: 700;
 }
 
+.chart-bar-boiler {
+  fill: rgba(255, 209, 102, 0.32);
+  stroke: rgba(255, 209, 102, 0.98);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 12px rgba(255, 209, 102, 0.18));
+}
+
+.boiler-panel {
+  margin-bottom: 24px;
+}
+
+.boiler-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.boiler-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(8, 20, 36, 0.9);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.boiler-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--muted);
+  box-shadow: 0 0 10px currentColor;
+}
+
+.boiler-status.boiler-on {
+  color: var(--green);
+  border-color: rgba(37, 242, 181, 0.36);
+}
+
+.boiler-status.boiler-on .boiler-status-dot {
+  background: var(--green);
+}
+
+.boiler-status.boiler-off {
+  color: var(--rose);
+  border-color: rgba(255, 93, 143, 0.34);
+}
+
+.boiler-status.boiler-off .boiler-status-dot {
+  background: var(--rose);
+}
+
+.boiler-year-card {
+  width: 100%;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.boiler-month-controls {
+  align-items: center;
+}
+
+.boiler-month-row {
+  align-items: center;
+}
+
+.boiler-month-row input[type="month"] {
+  min-height: 52px;
+}
+
+.boiler-month-row .nav-button {
+  flex: 0 0 auto;
+  width: 52px;
+  padding: 14px;
+}
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
@@ -721,6 +805,10 @@ body.is-loading .shell {
   }
 
   .chart-header {
+    flex-direction: column;
+  }
+
+  .boiler-header {
     flex-direction: column;
   }
 }

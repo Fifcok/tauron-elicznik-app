@@ -24,15 +24,40 @@ const monthlyChartTooltip = document.querySelector("#monthly-chart-tooltip");
 const monthlyEnergyChart = document.querySelector("#monthly-energy-chart");
 const monthlyChartTitle = document.querySelector("#monthly-chart-title");
 const dateInput = document.querySelector("#date-input");
+const boilerPanel = document.querySelector("#boiler-panel");
+const boilerName = document.querySelector("#boiler-name");
+const boilerStatus = document.querySelector("#boiler-status");
+const boilerStatusText = document.querySelector("#boiler-status-text");
+const boilerYearLabel = document.querySelector("#boiler-year-label");
+const boilerYearTotal = document.querySelector("#boiler-year-total");
+const boilerMonthTitle = document.querySelector("#boiler-month-title");
+const boilerMonthInput = document.querySelector("#boiler-month-input");
+const boilerPrevMonthButton = document.querySelector("#boiler-prev-month");
+const boilerNextMonthButton = document.querySelector("#boiler-next-month");
+const boilerChartEmpty = document.querySelector("#boiler-chart-empty");
+const boilerChartTooltip = document.querySelector("#boiler-chart-tooltip");
+const boilerEnergyChart = document.querySelector("#boiler-energy-chart");
 
 let lastPayload = null;
 let latestAvailableDate = "";
 let storageFactor = 0.8;
+let latestBoilerMonth = "";
 
 function shiftIsoDate(isoDate, amount) {
   const date = new Date(`${isoDate}T12:00:00`);
   date.setDate(date.getDate() + amount);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function shiftIsoMonth(isoMonth, amount) {
+  const [year, month] = isoMonth.split("-").map(Number);
+  const date = new Date(year, month - 1 + amount, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function currentIsoMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function formatKwh(value) {
@@ -260,7 +285,7 @@ function renderChart(rows, options) {
     });
 
     node.addEventListener("mousemove", (event) => {
-      const bounds = svg.getBoundingClientRect();
+      const bounds = (tooltip.offsetParent || svg).getBoundingClientRect();
       tooltip.style.left = `${event.clientX - bounds.left + 14}px`;
       tooltip.style.top = `${event.clientY - bounds.top + 14}px`;
     });
@@ -298,6 +323,133 @@ function renderMonthlyChart(rows, isoDate) {
   });
 }
 
+function renderBoilerChart(rows) {
+  const svg = boilerEnergyChart;
+  const emptyState = boilerChartEmpty;
+  const tooltip = boilerChartTooltip;
+
+  if (!rows.length) {
+    svg.innerHTML = "";
+    emptyState.hidden = false;
+    return;
+  }
+
+  emptyState.hidden = true;
+  const width = 920;
+  const height = 320;
+  const padding = { top: 18, right: 24, bottom: 44, left: 52 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const maxValue = Math.max(...rows.map((row) => row.energy), 0.1);
+  const groupWidth = chartWidth / Math.max(rows.length, 1);
+  const barWidth = Math.min(24, Math.max(10, groupWidth * 0.5));
+
+  const gridLines = Array.from({ length: 5 }, (_, index) => {
+    const ratio = index / 4;
+    const y = padding.top + chartHeight - chartHeight * ratio;
+    const value = (maxValue * ratio).toFixed(2);
+    return `
+      <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" class="chart-grid" />
+      <text x="${padding.left - 10}" y="${y + 4}" class="chart-axis" text-anchor="end">${value}</text>
+    `;
+  }).join("");
+
+  const bars = rows.map((row, index) => {
+    const groupX = padding.left + groupWidth * index + groupWidth / 2;
+    const barHeight = (row.energy / maxValue) * chartHeight;
+    const barY = padding.top + chartHeight - barHeight;
+
+    return `
+      <rect x="${(groupX - barWidth / 2).toFixed(2)}" y="${barY.toFixed(2)}" width="${barWidth.toFixed(2)}" height="${Math.max(barHeight, 1).toFixed(2)}" rx="8" class="chart-bar chart-bar-boiler" />
+      <rect x="${(padding.left + groupWidth * index).toFixed(2)}" y="${padding.top}" width="${groupWidth.toFixed(2)}" height="${chartHeight.toFixed(2)}" class="chart-hitbox" data-title="${row.date}" data-energy="${row.energy}" />
+    `;
+  }).join("");
+
+  svg.innerHTML = `
+    <rect x="0" y="0" width="${width}" height="${height}" rx="24" class="chart-bg"></rect>
+    ${gridLines}
+    <line x1="${padding.left}" y1="${padding.top + chartHeight}" x2="${width - padding.right}" y2="${padding.top + chartHeight}" class="chart-base" />
+    ${buildXAxisLabels(rows, chartWidth, chartHeight, padding, "dayLabel")}
+    ${bars}
+  `;
+
+  svg.querySelectorAll(".chart-hitbox").forEach((node) => {
+    node.addEventListener("mouseenter", () => {
+      const energy = formatKwh(Number(node.dataset.energy || 0));
+      tooltip.innerHTML = `<strong>${node.dataset.title}</strong><br />Zużycie: ${energy}`;
+      tooltip.hidden = false;
+    });
+
+    node.addEventListener("mousemove", (event) => {
+      const bounds = (tooltip.offsetParent || svg).getBoundingClientRect();
+      tooltip.style.left = `${event.clientX - bounds.left + 14}px`;
+      tooltip.style.top = `${event.clientY - bounds.top + 14}px`;
+    });
+
+    node.addEventListener("mouseleave", () => {
+      tooltip.hidden = true;
+    });
+  });
+}
+
+async function loadBoilerData(month) {
+  try {
+    const response = await fetch("api/boiler.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ month }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Nie udało się pobrać danych z Tapo.");
+    }
+
+    latestBoilerMonth = result.month;
+    boilerMonthInput.value = result.month;
+    boilerName.textContent = result.deviceName || "Bojler";
+    boilerYearLabel.textContent = `${result.deviceName || "Bojler"} w tym roku pobrał (${result.year})`;
+    boilerYearTotal.textContent = formatKwh(result.yearTotalKwh);
+    boilerMonthTitle.textContent = `Dzienne zużycie w miesiącu ${formatMonthYear(`${result.month}-01`)}`;
+
+    boilerStatus.classList.toggle("boiler-on", Boolean(result.deviceOn));
+    boilerStatus.classList.toggle("boiler-off", !result.deviceOn);
+    boilerStatusText.textContent = result.deviceOn ? "Włączony" : "Wyłączony";
+
+    renderBoilerChart(result.monthlyDaily || []);
+    boilerPanel.hidden = false;
+  } catch (error) {
+    boilerStatusText.textContent = error.message || "Błąd połączenia z Tapo";
+    boilerStatus.classList.remove("boiler-on");
+    boilerStatus.classList.add("boiler-off");
+    boilerPanel.hidden = false;
+    console.error(error);
+  }
+}
+
+if (boilerPanel && boilerPrevMonthButton && boilerNextMonthButton && boilerMonthInput) {
+  boilerPrevMonthButton.addEventListener("click", async () => {
+    const base = boilerMonthInput.value || latestBoilerMonth || currentIsoMonth();
+    await loadBoilerData(shiftIsoMonth(base, -1));
+  });
+
+  boilerNextMonthButton.addEventListener("click", async () => {
+    const base = boilerMonthInput.value || latestBoilerMonth || currentIsoMonth();
+    const next = shiftIsoMonth(base, 1);
+    const maxMonth = currentIsoMonth();
+    await loadBoilerData(next > maxMonth ? maxMonth : next);
+  });
+
+  boilerMonthInput.addEventListener("change", async () => {
+    if (boilerMonthInput.value) {
+      await loadBoilerData(boilerMonthInput.value);
+    }
+  });
+}
+
 async function loadConfig() {
   try {
     const response = await fetch("api/today.php?config=1");
@@ -323,6 +475,16 @@ async function loadConfig() {
   } catch {
     setStatus("Nie udało się odczytać konfiguracji startowej.", "error");
     showErrorModal("Nie udało się odczytać konfiguracji startowej.");
+  }
+
+  try {
+    const boilerConfigResponse = await fetch("api/boiler.php?config=1");
+    const boilerConfig = await boilerConfigResponse.json();
+    if (boilerConfig.hasConfig) {
+      await loadBoilerData("");
+    }
+  } catch {
+    // Sekcja bojlera jest opcjonalna - brak Tapo w sieci nie blokuje reszty aplikacji.
   }
 }
 
