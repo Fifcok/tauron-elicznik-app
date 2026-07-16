@@ -478,6 +478,26 @@ body.is-loading .shell {
   grid-column: span 2;
 }
 
+.prosumer-divider {
+  grid-column: 1 / -1;
+  margin: -4px 0 2px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.prosumer-pending {
+  background: linear-gradient(135deg, rgba(8, 20, 36, 0.98) 0%, rgba(5, 13, 24, 0.96) 100%);
+  border-color: rgba(127, 161, 191, 0.28);
+}
+
+.prosumer-pending .value {
+  font-size: clamp(1rem, 2.2vw, 1.3rem);
+  text-transform: none;
+  color: var(--muted);
+}
+
 .prosumer-positive {
   background: linear-gradient(135deg, rgba(5, 51, 39, 0.98) 0%, rgba(3, 26, 21, 0.96) 100%);
   border-color: rgba(37, 242, 181, 0.36);

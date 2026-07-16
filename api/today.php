@@ -277,26 +277,33 @@ function deleteSessionFiles(array $sessionFiles): void
 
 function loginToTauron(array $credentials, string $cookieFile, string $loginUrl, string $elicznikBaseUrl, string $blockUrl): void
 {
-    if (!is_file($cookieFile)) {
-        touch($cookieFile);
+    if (is_file($cookieFile)) {
+        unlink($cookieFile);
+    }
+    touch($cookieFile);
+
+    // Krok 1: Pobieramy formularz logowania z parametrem service
+    $response = performRequest($loginUrl, 'GET', [
+        'service' => $elicznikBaseUrl,
+    ], $cookieFile);
+    
+    $formAction = '';
+    if (preg_match('/<form[^>]+action="([^"]+)"/i', $response['body'] ?? '', $formMatches)) {
+        $formAction = html_entity_decode($formMatches[1]);
     }
 
-    $getLoginResponse = performRequest($loginUrl, 'GET', [], $cookieFile);
-    $csrfToken = '';
-    if (preg_match('/name="_csrf" value="([^"]+)"/', $getLoginResponse['body'] ?? '', $matches)) {
-        $csrfToken = $matches[1];
+    if ($formAction === '') {
+        throw new RuntimeException('Nie udalo sie znalezc adresu formularza logowania Keycloak.');
     }
 
+    // Krok 2: Przygotowujemy parametry logowania dla Keycloaka
     $loginParams = [
         'username' => $credentials['username'],
         'password' => $credentials['password'],
-        'service' => $elicznikBaseUrl,
     ];
-    if ($csrfToken !== '') {
-        $loginParams['_csrf'] = $csrfToken;
-    }
 
-    $loginResponse = performRequest($loginUrl, 'POST', $loginParams, $cookieFile);
+    // Krok 3: Wysyłamy POST na dynamiczny adres formularza
+    $loginResponse = performRequest($formAction, 'POST', $loginParams, $cookieFile);
 
     if (($loginResponse['final_url'] ?? '') === $blockUrl) {
         throw new RuntimeException('Tauron chwilowo blokuje dostep do konta z tego adresu. Spróbuj zmienić IP (restart routera) i odczekać chwilę.');
@@ -312,11 +319,9 @@ function loginToTauron(array $credentials, string $cookieFile, string $loginUrl,
             'site[client]' => $credentials['siteId'],
         ], $cookieFile);
     }
-}
-
-function fetchCsvForRange(string $fromDate, string $toDate, string $cookieFile, string $dataUrl): array
+    }function fetchCsvForRange(string $fromDate, string $toDate, string $cookieFile, string $dataUrl): array
 {
-    return performRequest($dataUrl, 'GET', [
+    $response = performRequest($dataUrl, 'GET', [
         'form[from]' => $fromDate,
         'form[to]' => $toDate,
         'form[type]' => 'godzin',
@@ -326,6 +331,12 @@ function fetchCsvForRange(string $fromDate, string $toDate, string $cookieFile, 
         'form[energy][netto_oze]' => '1',
         'form[fileType]' => 'CSV',
     ], $cookieFile);
+
+    if (($response['status'] ?? 500) >= 400) {
+        throw new RuntimeException('Tauron zwrocil blad HTTP ' . ($response['status'] ?? 500) . '.');
+    }
+
+    return $response;
 }
 
 function sessionNeedsRefresh(array $response): bool
@@ -531,6 +542,9 @@ function summarizeRows(array $rows, string $isoDate, float $storageFactor, array
     $totals['prosumerBalance'] = ($totals['exported'] * $storageFactor) - $totals['imported'];
     $totals['availableFromStorage'] = max($totals['prosumerBalance'], 0);
     $totals['storageDeficit'] = max(-$totals['prosumerBalance'], 0);
+    $totals['prosumerBalanceNet'] = ($totals['netExported'] * $storageFactor) - $totals['netImported'];
+    $totals['availableFromStorageNet'] = max($totals['prosumerBalanceNet'], 0);
+    $totals['storageDeficitNet'] = max(-$totals['prosumerBalanceNet'], 0);
 
     return [
         'date' => $isoDate,
@@ -546,9 +560,14 @@ function summarizeStorageRange(array $rows, float $storageFactor, string $startD
     $totals = [
         'imported' => 0.0,
         'exported' => 0.0,
+        'netImported' => 0.0,
+        'netExported' => 0.0,
         'prosumerBalance' => 0.0,
         'availableFromStorage' => 0.0,
         'storageDeficit' => 0.0,
+        'prosumerBalanceNet' => 0.0,
+        'availableFromStorageNet' => 0.0,
+        'storageDeficitNet' => 0.0,
         'storageFactor' => $storageFactor,
         'periodStart' => $startDate,
         'periodEnd' => $endDate,
@@ -561,16 +580,29 @@ function summarizeStorageRange(array $rows, float $storageFactor, string $startD
             continue;
         }
 
-        if ($row['type'] === 'pobor' || $row['type'] === 'pobór') {
-            $totals['imported'] += $row['value'];
-        } elseif ($row['type'] === 'oddanie') {
-            $totals['exported'] += $row['value'];
+        switch ($row['type']) {
+            case 'pobor':
+            case 'pobór':
+                $totals['imported'] += $row['value'];
+                break;
+            case 'oddanie':
+                $totals['exported'] += $row['value'];
+                break;
+            case 'pobrana po zbilansowaniu':
+                $totals['netImported'] += $row['value'];
+                break;
+            case 'oddana po zbilansowaniu':
+                $totals['netExported'] += $row['value'];
+                break;
         }
     }
 
     $totals['prosumerBalance'] = ($totals['exported'] * $storageFactor) - $totals['imported'];
     $totals['availableFromStorage'] = max($totals['prosumerBalance'], 0);
     $totals['storageDeficit'] = max(-$totals['prosumerBalance'], 0);
+    $totals['prosumerBalanceNet'] = ($totals['netExported'] * $storageFactor) - $totals['netImported'];
+    $totals['availableFromStorageNet'] = max($totals['prosumerBalanceNet'], 0);
+    $totals['storageDeficitNet'] = max(-$totals['prosumerBalanceNet'], 0);
 
     return $totals;
 }
@@ -668,6 +700,7 @@ function normalizeHourlyOrder(array $hourly, array $hourSequence): array
 function normalizeType(string $value): string
 {
     $value = strtolower($value);
+    $value = str_replace(' [kwh]', '', $value);
     return strtr($value, [
         'ą' => 'a',
         'ć' => 'c',
@@ -677,7 +710,7 @@ function normalizeType(string $value): string
         'ó' => 'o',
         'ś' => 's',
         'ż' => 'z',
-        'ź' => 'z',
+        'ź' => 'z'
     ]);
 }
 
@@ -749,3 +782,5 @@ function jsonResponse(array $payload): void
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
+
+

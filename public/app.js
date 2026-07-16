@@ -8,6 +8,8 @@ const summaryGrid = document.querySelector("#summary-grid");
 const summaryDate = document.querySelector("#summary-date");
 const prosumerCard = document.querySelector("#prosumer-card");
 const prosumerYearCard = document.querySelector("#prosumer-year-card");
+const prosumerNetCard = document.querySelector("#prosumer-net-card");
+const prosumerNetYearCard = document.querySelector("#prosumer-net-year-card");
 const errorModal = document.querySelector("#error-modal");
 const errorModalMessage = document.querySelector("#error-modal-message");
 const errorModalClose = document.querySelector("#error-modal-close");
@@ -111,6 +113,21 @@ function renderTotals(totals) {
     prosumerCard.classList.add("prosumer-negative");
     prosumerCard.classList.remove("prosumer-positive");
   }
+
+  const netBalanceValue = document.querySelector("#prosumer-net-balance-total");
+  if (Number(totals.netImported || 0) === 0 || Number(totals.netExported || 0) === 0) {
+    netBalanceValue.textContent = "Czekam na dane od Tauron - pojawiają się po południu";
+    prosumerNetCard.classList.add("prosumer-pending");
+    prosumerNetCard.classList.remove("prosumer-positive", "prosumer-negative");
+  } else if (totals.prosumerBalanceNet >= 0) {
+    netBalanceValue.textContent = formatKwh(totals.availableFromStorageNet);
+    prosumerNetCard.classList.add("prosumer-positive");
+    prosumerNetCard.classList.remove("prosumer-negative", "prosumer-pending");
+  } else {
+    netBalanceValue.textContent = `-${Number(totals.storageDeficitNet || 0).toFixed(2)} kWh`;
+    prosumerNetCard.classList.add("prosumer-negative");
+    prosumerNetCard.classList.remove("prosumer-positive", "prosumer-pending");
+  }
 }
 
 function renderYearlyStorage(yearlyStorage) {
@@ -127,6 +144,20 @@ function renderYearlyStorage(yearlyStorage) {
     balanceValue.textContent = `-${Number(yearlyStorage.storageDeficit || 0).toFixed(2)} kWh`;
     prosumerYearCard.classList.add("prosumer-negative");
     prosumerYearCard.classList.remove("prosumer-positive");
+  }
+
+  const netBalanceValue = document.querySelector("#prosumer-net-year-total");
+  const netBalanceLabel = document.querySelector("#prosumer-net-year-label");
+  netBalanceLabel.textContent = `Magazyn prosumencki roczny po zbilansowaniu ${year}`;
+
+  if (yearlyStorage.prosumerBalanceNet >= 0) {
+    netBalanceValue.textContent = formatKwh(yearlyStorage.availableFromStorageNet);
+    prosumerNetYearCard.classList.add("prosumer-positive");
+    prosumerNetYearCard.classList.remove("prosumer-negative");
+  } else {
+    netBalanceValue.textContent = `-${Number(yearlyStorage.storageDeficitNet || 0).toFixed(2)} kWh`;
+    prosumerNetYearCard.classList.add("prosumer-negative");
+    prosumerNetYearCard.classList.remove("prosumer-positive");
   }
 }
 

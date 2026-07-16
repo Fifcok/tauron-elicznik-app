@@ -1,11 +1,15 @@
-<?php $yesterday = date('Y-m-d', strtotime('yesterday')); ?>
+<?php
+$yesterday = date('Y-m-d', strtotime('yesterday'));
+$stylesVersion = file_exists(__DIR__ . '/public/styles.css') ? filemtime(__DIR__ . '/public/styles.css') : time();
+$appJsVersion = file_exists(__DIR__ . '/public/app.js') ? filemtime(__DIR__ . '/public/app.js') : time();
+?>
 <!doctype html>
 <html lang="pl">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tauron Energetyka Dnia</title>
-    <link rel="stylesheet" href="public/styles.css" />
+    <link rel="stylesheet" href="public/styles.css?v=<?php echo $stylesVersion; ?>" />
   </head>
   <body>
     <div class="loading-bar"></div>
@@ -78,6 +82,15 @@
           <p class="label" id="prosumer-year-label">Magazyn prosumencki roczny</p>
           <p class="value" id="prosumer-year-total">0.00 kWh</p>
         </article>
+        <p class="prosumer-divider">lub - w zależności jak liczy Tauron, ale tego nikt nie wie</p>
+        <article class="card accent-ink prosumer-card" id="prosumer-net-card">
+          <p class="label">Magazyn prosumencki dzienny po zbilansowaniu</p>
+          <p class="value" id="prosumer-net-balance-total">0.00 kWh</p>
+        </article>
+        <article class="card accent-ink prosumer-card" id="prosumer-net-year-card">
+          <p class="label" id="prosumer-net-year-label">Magazyn prosumencki roczny po zbilansowaniu</p>
+          <p class="value" id="prosumer-net-year-total">0.00 kWh</p>
+        </article>
         <article class="card accent-blue">
           <p class="label">Pobrana</p>
           <p class="value" id="imported-total">0.00 kWh</p>
@@ -129,6 +142,6 @@
       </section>
     </main>
 
-    <script src="public/app.js"></script>
+    <script src="public/app.js?v=<?php echo $appJsVersion; ?>"></script>
   </body>
 </html>
