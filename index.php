@@ -178,6 +178,42 @@ $appJsVersion = file_exists(__DIR__ . '/public/app.js') ? filemtime(__DIR__ . '/
         <div id="boiler-chart-tooltip" class="chart-tooltip" hidden></div>
         <svg id="boiler-energy-chart" class="energy-chart" viewBox="0 0 920 320" role="img" aria-label="Wykres dziennego zużycia bojlera"></svg>
       </section>
+
+      <section class="panel gree-panel" id="gree-panel" hidden>
+        <div class="boiler-header">
+          <div>
+            <p class="eyebrow">Gree</p>
+            <h2 id="gree-name">Klimatyzacja</h2>
+          </div>
+          <span class="boiler-status" id="gree-status">
+            <span class="boiler-status-dot"></span>
+            <span id="gree-status-text">Sprawdzam...</span>
+          </span>
+        </div>
+
+        <div class="grid gree-stats-grid" id="gree-stats-grid" hidden>
+          <article class="card accent-blue gree-stat-card">
+            <p class="gree-stat-icon">🌡️</p>
+            <p class="gree-stat-label">Temperatura</p>
+            <p class="gree-stat-value" id="gree-temp">--</p>
+          </article>
+          <article class="card accent-rose gree-stat-card">
+            <p class="gree-stat-icon" id="gree-mode-icon">❄️</p>
+            <p class="gree-stat-label">Tryb</p>
+            <p class="gree-stat-value" id="gree-mode">--</p>
+          </article>
+          <article class="card accent-green gree-stat-card">
+            <p class="gree-stat-icon">🌬️</p>
+            <p class="gree-stat-label">Wentylator</p>
+            <p class="gree-stat-value" id="gree-fan">--</p>
+          </article>
+          <article class="card accent-sand gree-stat-card">
+            <p class="gree-stat-icon">↕️</p>
+            <p class="gree-stat-label">Nawiew</p>
+            <p class="gree-stat-value" id="gree-swing">--</p>
+          </article>
+        </div>
+      </section>
     </main>
 
     <script src="public/app.js?v=<?php echo $appJsVersion; ?>"></script>

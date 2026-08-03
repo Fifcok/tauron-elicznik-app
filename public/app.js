@@ -37,6 +37,24 @@ const boilerNextMonthButton = document.querySelector("#boiler-next-month");
 const boilerChartEmpty = document.querySelector("#boiler-chart-empty");
 const boilerChartTooltip = document.querySelector("#boiler-chart-tooltip");
 const boilerEnergyChart = document.querySelector("#boiler-energy-chart");
+const greePanel = document.querySelector("#gree-panel");
+const greeName = document.querySelector("#gree-name");
+const greeStatus = document.querySelector("#gree-status");
+const greeStatusText = document.querySelector("#gree-status-text");
+const greeStatsGrid = document.querySelector("#gree-stats-grid");
+const greeTemp = document.querySelector("#gree-temp");
+const greeModeIcon = document.querySelector("#gree-mode-icon");
+const greeMode = document.querySelector("#gree-mode");
+const greeFan = document.querySelector("#gree-fan");
+const greeSwing = document.querySelector("#gree-swing");
+
+const GREE_MODE_ICONS = {
+  "Auto": "🔄",
+  "Chłodzenie": "❄️",
+  "Osuszanie": "💧",
+  "Wentylator": "🌀",
+  "Grzanie": "🔥",
+};
 
 let lastPayload = null;
 let latestAvailableDate = "";
@@ -450,6 +468,43 @@ if (boilerPanel && boilerPrevMonthButton && boilerNextMonthButton && boilerMonth
   });
 }
 
+async function loadGreeData() {
+  try {
+    const response = await fetch("api/gree.php");
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Nie udało się połączyć z klimatyzacją Gree.");
+    }
+
+    greeName.textContent = result.deviceName || "Klimatyzacja";
+    greeStatus.classList.toggle("boiler-on", Boolean(result.on));
+    greeStatus.classList.toggle("boiler-off", !result.on);
+
+    if (result.on) {
+      greeStatusText.textContent = "Włączona";
+      greeTemp.textContent = `${result.setTemp}°${result.tempUnit}`;
+      greeModeIcon.textContent = GREE_MODE_ICONS[result.mode] || "⚙️";
+      greeMode.textContent = result.mode;
+      greeFan.textContent = result.fanSpeed;
+      greeSwing.textContent = result.swing;
+      greeStatsGrid.hidden = false;
+    } else {
+      greeStatusText.textContent = "Wyłączona";
+      greeStatsGrid.hidden = true;
+    }
+
+    greePanel.hidden = false;
+  } catch (error) {
+    greeStatusText.textContent = error.message || "Błąd połączenia z klimatyzacją Gree";
+    greeStatus.classList.remove("boiler-on");
+    greeStatus.classList.add("boiler-off");
+    greeStatsGrid.hidden = true;
+    greePanel.hidden = false;
+    console.error(error);
+  }
+}
+
 async function loadConfig() {
   try {
     const response = await fetch("api/today.php?config=1");
@@ -485,6 +540,17 @@ async function loadConfig() {
     }
   } catch {
     // Sekcja bojlera jest opcjonalna - brak Tapo w sieci nie blokuje reszty aplikacji.
+  }
+
+  try {
+    const greeConfigResponse = await fetch("api/gree.php?config=1");
+    const greeConfig = await greeConfigResponse.json();
+    if (greeConfig.hasConfig) {
+      await loadGreeData();
+      setInterval(loadGreeData, 60000);
+    }
+  } catch {
+    // Sekcja klimatyzacji jest opcjonalna - brak Gree w sieci nie blokuje reszty aplikacji.
   }
 }
 

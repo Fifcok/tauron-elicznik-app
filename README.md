@@ -17,6 +17,7 @@ Moderny dashboard do monitorowania zużycia energii elektrycznej, zaprojektowany
 - Bilans magazynu prosumenckiego (dzienny i roczny), liczony zarówno z surowych, jak i zbilansowanych przez Tauron wartości
 - Interaktywne wykresy godzinowe oraz miesięczne
 - Opcjonalnie: zużycie energii przez urządzenie podłączone do lokalnego gniazdka **TP-Link Tapo P110** (np. bojler) — status włączenia, roczny licznik zużycia i wykres dzienny dla wybranego miesiąca
+- Opcjonalnie: status klimatyzacji **Gree** w sieci lokalnej — włączona/wyłączona, ustawiona temperatura, tryb, prędkość wentylatora i nawiew
 
 ![Screen z WWW](img/screen.png)
 
@@ -52,6 +53,22 @@ Jeśli te pola są puste, sekcja po prostu się nie pokazuje — reszta aplikacj
 
 **Ważne — firmware 1.4.0+:** nowsze firmware Tapo domyślnie blokuje lokalne API dla aplikacji innych firm (błąd `HTTP 403` na handshake). Trzeba to ręcznie włączyć w aplikacji Tapo: **Me → Third-Party Services → Third-Party Compatibility**.
 
+## ❄️ Klimatyzacja Gree (opcjonalnie)
+
+Aplikacja może dodatkowo pokazywać status klimatyzacji **Gree** (i kompatybilnych - np. Cooper&Hunter, Sinclair, Tadiran) po sieci lokalnej: czy jest włączona, ustawioną temperaturę, tryb (Auto/Chłodzenie/Osuszanie/Wentylator/Grzanie), prędkość wentylatora oraz ustawienie nawiewu. Podobnie jak przy gniazdku Tapo, komunikacja odbywa się bezpośrednio w sieci lokalnej (UDP, port 7000), więc **serwer PHP musi działać w tej samej sieci LAN co klimatyzacja**.
+
+Klimatyzacja musi być wcześniej skonfigurowana w aplikacji **Gree+ / EWPE Smart** (podłączona do WiFi) - sterowanie lokalne korzysta z tego samego parowania, bez potrzeby łączenia się z chmurą Gree.
+
+Aby włączyć tę sekcję, dopisz w `config.local.php`:
+
+```php
+'GREE_AC_IP'   => '192.168.1.60',
+'GREE_AC_PORT' => 7000,
+'GREE_AC_NAME' => 'Klimatyzacja',
+```
+
+Jeśli `GREE_AC_IP` jest puste, sekcja po prostu się nie pokazuje — reszta aplikacji działa bez zmian.
+
 ## 🔒 Bezpieczeństwo
 
 Dane logowania są przechowywane w pliku `config.local.php`, który jest wykonywany po stronie serwera. Dzięki temu Twoje hasło nigdy nie jest wystawione na widok publiczny.
@@ -63,6 +80,7 @@ Dane logowania są przechowywane w pliku `config.local.php`, który jest wykonyw
 - `public/app.js` – Logika frontendu i wizualizacja danych.
 - `api/today.php` – Backend obsługujący komunikację z Tauronem.
 - `api/boiler.php` – Backend obsługujący lokalną komunikację (protokół KLAP) z gniazdkiem Tapo P110.
+- `api/gree.php` – Backend obsługujący lokalną komunikację (UDP/AES) z klimatyzacją Gree.
 
 ---
 *Projekt zmodernizowany z dbałością o detale i UX.*

@@ -10,4 +10,9 @@ return [
     'TAPO_EMAIL'       => 'email_do_konta_tp-link',
     'TAPO_PASSWORD'    => 'haslo_do_konta_tp-link',
     'TAPO_BOILER_NAME' => 'Bojler',
+
+    // Klimatyzacja Gree w sieci lokalnej (opcjonalne - pomin, jesli nie uzywasz)
+    'GREE_AC_IP'   => '192.168.1.60',
+    'GREE_AC_PORT' => 7000,
+    'GREE_AC_NAME' => 'Klimatyzacja',
 ];
