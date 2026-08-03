@@ -12,5 +12,8 @@ Thumbs.db
 *.swp
 sync.ffs_db
 
+# Lokalna konfiguracja Claude Code
+.claude/
+
 # Logi
 *.log
