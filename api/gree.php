@@ -163,26 +163,36 @@ function greeDecrypt(string $key, string $base64Cipher): string
     return $plain;
 }
 
-function greeUdpTransaction(string $ip, int $port, string $payload, int $timeoutSec = 3): string
+function greeUdpTransaction(string $ip, int $port, string $payload, int $timeoutSec = 3, int $attempts = 2): string
 {
-    $errno = 0;
-    $errstr = '';
-    $socket = @stream_socket_client("udp://{$ip}:{$port}", $errno, $errstr, $timeoutSec);
-    if ($socket === false) {
-        throw new RuntimeException("Nie udalo sie polaczyc z klimatyzacja Gree ({$ip}:{$port}): {$errstr}");
+    $lastError = null;
+
+    for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+        $errno = 0;
+        $errstr = '';
+        $socket = @stream_socket_client("udp://{$ip}:{$port}", $errno, $errstr, $timeoutSec);
+        if ($socket === false) {
+            $lastError = "Nie udalo sie polaczyc z klimatyzacja Gree ({$ip}:{$port}): {$errstr}";
+            continue;
+        }
+
+        stream_set_timeout($socket, $timeoutSec);
+        fwrite($socket, $payload);
+        $response = fread($socket, 8192);
+        $meta = stream_get_meta_data($socket);
+        fclose($socket);
+
+        if ($response === false || $response === '' || ($meta['timed_out'] ?? false)) {
+            // UDP nie gwarantuje dostarczenia - pojedynczy zgubiony pakiet
+            // jest normalny dla slabego modulu WiFi w tych klimatyzacjach.
+            $lastError = 'Brak odpowiedzi od klimatyzacji Gree (timeout). Sprawdz adres IP i czy urzadzenie jest w sieci.';
+            continue;
+        }
+
+        return $response;
     }
 
-    stream_set_timeout($socket, $timeoutSec);
-    fwrite($socket, $payload);
-    $response = fread($socket, 8192);
-    $meta = stream_get_meta_data($socket);
-    fclose($socket);
-
-    if ($response === false || $response === '' || ($meta['timed_out'] ?? false)) {
-        throw new RuntimeException('Brak odpowiedzi od klimatyzacji Gree (timeout). Sprawdz adres IP i czy urzadzenie jest w sieci.');
-    }
-
-    return $response;
+    throw new RuntimeException($lastError ?? 'Brak odpowiedzi od klimatyzacji Gree.');
 }
 
 function greeFetchStatus(string $ip, int $port): array
